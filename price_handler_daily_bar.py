@@ -115,9 +115,9 @@ class JsonBarPriceHandler(AbstractBarPriceHandler):
             print('Could not subscribe ticker {0} as is already subscribed.'.format(ticker))
 
 
-evt_que = queue.Queue()
-x = JsonBarPriceHandler("E:\\OneDrive\\StockData\\EOD", evt_que, init_tickers=['APH.TO'])
-print(x)
-x.subscribe_ticker('WEED.TO')
-print(x.tickers)
-print(x.tickers_data)
+# evt_que = queue.Queue()
+# x = JsonBarPriceHandler("E:\\OneDrive\\StockData\\EOD", evt_que, init_tickers=['APH.TO'])
+# print(x)
+# x.subscribe_ticker('WEED.TO')
+# print(x.tickers)
+# print(x.tickers_data)
