@@ -70,3 +70,5 @@ class TradingSession(object):
         Runs either a backtest or live session, and outputs performance when complete.
         """
         self._run_session()
+
+
