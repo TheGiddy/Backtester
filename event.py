@@ -108,3 +108,78 @@ class BarEvent(Event):
 
     def __repr__(self):
         return str(self)
+
+
+class SignalEvent(Event):
+    '''
+    Handles the event of sending a Signal from a Strategy object. This is received by a Portfolio object and acted upon.
+    '''
+    def __init__(self, ticker, action, suggested_quantity=None):
+        '''
+        Initialises the SignalEvent.
+
+        :param ticker: The ticker symbol, e.g. 'AAPL'
+        :param action: 'BOT' (for long) or 'SLD' (for short)
+        :param suggested_quantity: Optional positively valued integer representing a suggested absolute quantity of
+                    units of an asset to transact in, which is used by the PositionSizer and RiskManager.
+        '''
+        self.type = EventType.SIGNAL
+        self.ticker = ticker
+        self.action = action
+        self.suggested_quantity = suggested_quantity
+
+
+class OrderEvent(Event):
+    '''
+    Handles the event of sending an Order to an execution system. The order contains a ticker (e.g. GOOG), action
+    (BOT or SLD) and quantity.
+    '''
+    def __init__(self, ticker, action, quantity):
+        '''
+        Initialises the OrderEvent
+
+        :param ticker: The ticker symbol, e.g. 'AAPL'
+        :param action: 'BOT' (for long) or 'SLD' (for short).
+        :param quantity: The quantity of shares to transact.
+        '''
+        self.type = EventType.ORDER
+        self.ticker = ticker
+        self.action = action
+        self.quantity = quantity
+
+    def print_order(self):
+        '''
+        Outputs the values within the OrderEvent.
+        :return:
+        '''
+        print('Order: Ticker={0}, Action={1}, Quantity={2}'.format(self.ticker, self.action, self.quantity))
+
+
+class FillEvent(Event):
+    '''
+    Encapsulates the notion of a filled order, as returned from a brokerage. Stores the quantity of an instrument
+    actually filled and at what price. In addition, stores the commission of the trade from the brokerage.
+
+    TODO: Currently does not support filling positions at different prices. This will be simulated by averaging
+    the cost.
+    '''
+
+    def __init__(self, timestamp, ticker, action, quantity, exchange, price, commission):
+        '''
+
+        :param timestamp: The timestamp when the order was filled.
+        :param ticker: The ticker symbol, e.g. 'GOOG'.
+        :param action: 'BOT' (for long) or 'SLD' (for short).
+        :param quantity: The filled quantity.
+        :param exchange: The exchange where the order was filled.
+        :param price: The price at which the trade was filled
+        :param commission: The brokerage commission for carrying out the trade.
+        '''
+        self.type = EventType.FILL
+        self.timestamp = timestamp
+        self.ticker = ticker
+        self.action = action
+        self.quantity = quantity
+        self.exchange = exchange
+        self.price = price
+        self.commission = commission
