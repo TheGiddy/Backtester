@@ -3,27 +3,53 @@ import queue
 from event import EventType
 from price_handler_daily_bar import JsonBarPriceHandler
 from price_parser import PriceParser
-
+from portfolio import Portfolio
 
 class TradingSession(object):
     """
     Enscapsulates the settings and components for carrying out either a backtest or live trading session.
     """
     def __init__(self,
+                 config,
+                 strategy,
                  tickers,
+                 equity,
                  start_date,
                  end_date,
-                 events_que,
+                 events_queue,
                  session_type='backtest',
                  end_session_time=None,
-                 price_handler=None):
+                 price_handler=None,
+                 portfolio_handler=None,
+                 compliance=None,
+                 position_sizer=None,
+                 execution_handler=None,
+                 risk_manager=None,
+                 statistics=None,
+                 sentiment_handler=None,
+                 title=None,
+                 benchmark=None
+                 ):
+        self.equity = equity
+        self.config = config
+        self.strategy = strategy
         self.tickers = tickers
         self.start_date = start_date
         self.end_date = end_date
-        self.events_que = events_que
+        self.events_queue = events_queue
         self.session_type = session_type
         self.end_session_time = end_session_time
         self.price_handler = price_handler
+        self.portfolio_handler = portfolio_handler
+        self.compliance = compliance
+        self.execution_handler = execution_handler
+        self.position_sizer = position_sizer
+        self.risk_manager = risk_manager
+        self.statistics = statistics
+        self.sentiment_handler = sentiment_handler
+        self.title = title
+        self.benchmark = benchmark
+        self.session_type = session_type
         self._config_session()
         self.cur_time = None
 
@@ -32,12 +58,25 @@ class TradingSession(object):
                 raise Exception('Must specify an end_session_time when live trading')
 
     def _config_session(self):
-        """
+        '''
         Initialises the necessary classes used within the session.
         :return:
-        """
-
-        pass
+        '''
+        if self.price_handler is None and self.session_type == "backtest":
+            self.price_handler = JsonBarPriceHandler(self.config.backtester.json_data_dir,
+                                                     self.events_queue,
+                                                     self.tickers,
+                                                     start_date=self.start_date,
+                                                     end_date=self.end_date
+                                                     )
+        if self.portfolio_handler is None:
+            self.portfolio_handler = PortfolioHandler(
+                self.equity,
+                self.events_queue,
+                self.price_handler,
+                self.position_sizer,
+                self.risk_manager
+            )
 
     def _continue_loop_condition(self):
         if self.session_type == 'backtest':
@@ -46,10 +85,10 @@ class TradingSession(object):
             return datetime.now() < self.end_session_time
 
     def _run_session(self):
-        """
+        '''
         Carries out an infinite while loop that polls the events queue and directs each event to either the strategy
         component of the execution handler. The loop continue until the event queue has been emptied.
-        """
+        '''
         if self.session_type == 'backtest':
             print('Running backtest...')
         else:
@@ -57,7 +96,7 @@ class TradingSession(object):
 
         while self._continue_loop_condition():
             try:
-                event = self.events_que.get(False)
+                event = self.events_queue.get(False)
             except queue.Empty:
                 self.price_handler.stream_next()
             else:
@@ -70,5 +109,3 @@ class TradingSession(object):
         Runs either a backtest or live session, and outputs performance when complete.
         """
         self._run_session()
-
-

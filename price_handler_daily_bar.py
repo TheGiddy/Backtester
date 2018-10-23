@@ -55,7 +55,7 @@ class JsonBarPriceHandler(AbstractBarPriceHandler):
                 cur_df = pd.read_json(cur_path, orient='records')
                 df = df.append(cur_df)
 
-        df['start'] = (pd.to_datetime(df['start'])).dt.date
+        df['start'] = (pd.to_datetime(df['start']))
         df = df.reset_index(drop=True)
         df = df.drop_duplicates()
         df = df.set_index('start')
