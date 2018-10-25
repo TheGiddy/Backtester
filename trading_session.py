@@ -5,6 +5,7 @@ from price_handler_daily_bar import JsonBarPriceHandler
 from price_parser import PriceParser
 from portfolio import Portfolio
 
+
 class TradingSession(object):
     """
     Enscapsulates the settings and components for carrying out either a backtest or live trading session.
