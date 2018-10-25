@@ -3,6 +3,7 @@ import pandas as pd
 from price_handler_base import AbstractBarPriceHandler
 from event import BarEvent
 import queue
+from price_parser import PriceParser
 
 
 class JsonBarPriceHandler(AbstractBarPriceHandler):
@@ -11,12 +12,7 @@ class JsonBarPriceHandler(AbstractBarPriceHandler):
     requested financial instrument and stream those to the provided events que as BarEvents.
     """
 
-    def __init__(self,
-                 json_dir,
-                 events_que,
-                 init_tickers=None,
-                 start_date=None,
-                 end_date=None):
+    def __init__(self, json_dir, events_que, init_tickers=None, start_date=None, end_date=None):
         """
         Takes the JSON directory, the events queue and a possible list of initial ticker symbols then creates
         an (optional) list of ticker subscriptions and associated prices.
@@ -115,9 +111,69 @@ class JsonBarPriceHandler(AbstractBarPriceHandler):
             print('Could not subscribe ticker {0} as is already subscribed.'.format(ticker))
 
 
+
 # evt_que = queue.Queue()
 # x = JsonBarPriceHandler("E:\\OneDrive\\StockData\\EOD", evt_que, init_tickers=['APH.TO'])
 # print(x)
 # x.subscribe_ticker('WEED.TO')
 # print(x.tickers)
 # print(x.tickers_data)
+
+    def _create_event(self, index, period, ticker, row):
+        '''
+        Obtain all elements of the bar from a row of dataframe and return a BarEvent
+
+        :param index:
+        :param period:
+        :param ticker:
+        :param row:
+        :return:
+        '''
+        open_price = PriceParser.parse(row['open'])
+        high_price = PriceParser.parse(row['high'])
+        low_price = PriceParser.parse(row['low'])
+        close_price = PriceParser.parse(row['close'])
+        volume = int(row['volume'])
+        bar_event = BarEvent(ticker, index, period, open_price, high_price, low_price, close_price, volume)
+
+        return bar_event
+
+    def _store_event(self, event):
+        '''
+        Store price event for closing price and adjusted closing price
+
+        :param event:
+        :return:
+        '''
+        ticker = event.ticker
+        # If the calc_adj_returns flag is True, then calculate and store the full list of adjusted closing price
+        # percentage returns in a list
+        # TODO: Make this faster
+
+        self.tickers[ticker]['close'] = event.close_price
+        self.tickers[ticker]['timestamp'] = event.time
+
+    def stream_next(self):
+        '''
+        Place the next bar event on the queue
+        :return:
+        '''
+
+        try:
+            index, row = next(self.bar_stream)
+        except StopIteration:
+            self.continue_backtest = False
+            return
+
+        # Obtain all elements of the bar from the dataframe
+        ticker = row['ticker']
+        period = 86400  # Seconds in a day
+
+        # Create the tick event for the queue
+        bar_event = self._create_event(index, period, ticker, row)
+
+        # Store event
+        self._store_event(bar_event)
+
+        # Send event to queue
+        self.events_que.put(bar_event)

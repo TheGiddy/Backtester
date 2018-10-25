@@ -4,6 +4,7 @@ from event import EventType
 from price_handler_daily_bar import JsonBarPriceHandler
 from price_parser import PriceParser
 from portfolio import Portfolio
+from portfolio_handler import PortfolioHandler
 
 
 class TradingSession(object):
