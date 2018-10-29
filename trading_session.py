@@ -5,6 +5,9 @@ from price_handler_daily_bar import JsonBarPriceHandler
 from price_parser import PriceParser
 from portfolio import Portfolio
 from portfolio_handler import PortfolioHandler
+from risk_manager_example import ExampleRiskManager
+from position_sizer_fixed import FixedPositionSizer
+
 
 
 class TradingSession(object):
@@ -79,6 +82,12 @@ class TradingSession(object):
                 self.position_sizer,
                 self.risk_manager
             )
+
+        if self.position_sizer is None:
+            self.position_sizer = FixedPositionSizer()
+
+        if self.risk_manager is None:
+            self.risk_manager = ExampleRiskManager()
 
     def _continue_loop_condition(self):
         if self.session_type == 'backtest':
