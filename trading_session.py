@@ -65,7 +65,7 @@ class TradingSession(object):
         :return:
         '''
         if self.price_handler is None and self.session_type == "backtest":
-            self.price_handler = JsonBarPriceHandler(self.config.backtester.json_data_dir,
+            self.price_handler = JsonBarPriceHandler(self.config.backtester.eod_json_data_dir,
                                                      self.events_queue,
                                                      self.tickers,
                                                      start_date=self.start_date,
@@ -99,6 +99,7 @@ class TradingSession(object):
         while self._continue_loop_condition():
             try:
                 event = self.events_queue.get(False)
+                print(event)
             except queue.Empty:
                 self.price_handler.stream_next()
             else:

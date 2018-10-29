@@ -4,6 +4,7 @@ from strategy_base import AbstractStrategy
 import queue
 from trading_session import TradingSession
 import settings
+from equity_handler import EquityHandler
 
 
 class TestStrategy(AbstractStrategy):
@@ -22,6 +23,7 @@ class TestStrategy(AbstractStrategy):
         if event.type in [EventType.BAR, EventType.TICK] and event.ticker == self.ticker:
             if not self.invested and self.bars == 0:
                 signal = SignalEvent(self.ticker, 'BOT', suggested_quantity=self.base_quantity)
+                print('Signal - {0}'.format(signal))
                 self.events_queue.put(signal)
                 self.invested = True
             self.bars = 1
@@ -31,8 +33,8 @@ def run(config, testing, tickers, filename):
     # Backtest information
     title = ['Test example on {0}'.format(tickers[0])]
     initial_quantity = 10000.0
-    start_date = datetime.datetime(2016, 1, 1)
-    end_date = datetime.datetime(2016, 12, 1)
+    start_date = datetime.datetime(2018, 1, 1)
+    end_date = datetime.datetime(2018, 12, 1)
 
     # Use the Buy and Hold Strategy
     events_queue = queue.Queue()
@@ -55,6 +57,8 @@ if __name__ == '__main__':
     # Configuration data
     testing = False
     config = settings.from_file(settings.DEFAULT_CONFIG_FILENAME, testing)
-    tickers = ['APH.TO']
+    #tickers = ['APH.TO', 'WEED.TO', 'ACB.TO']
+    e_handler = EquityHandler(['TSX'])
+    tickers = e_handler.get_symbols()
     filename = None
     run(config, testing, tickers, filename)

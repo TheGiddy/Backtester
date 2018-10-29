@@ -48,15 +48,26 @@ class JsonBarPriceHandler(AbstractBarPriceHandler):
         for year_d in os.listdir(self.json_dir):
             if os.path.isdir(os.path.join(self.json_dir, year_d)):
                 cur_path = '{0}\\{1}\\{2}\\_{3}.json'.format(self.json_dir, year_d, ticker[0], ticker)
-                cur_df = pd.read_json(cur_path, orient='records')
-                df = df.append(cur_df)
+                try:
+                    cur_df = pd.read_json(cur_path, orient='records')
+                    df = df.append(cur_df)
+                except ValueError:
+                    pass
 
-        df['start'] = (pd.to_datetime(df['start']))
-        df = df.reset_index(drop=True)
-        df = df.drop_duplicates()
-        df = df.set_index('start')
-        self.tickers_data[ticker] = df
-        self.tickers_data[ticker]['Ticker'] = ticker
+        try:
+            df['start'] = (pd.to_datetime(df['start']))
+            df = df.reset_index(drop=True)
+            df = df.drop_duplicates()
+            df = df.set_index('start')
+            if df['open'].isnull().values.any():  # Null values in open price meaning this ticker is not active
+                pass
+            elif df['close'].isnull().values.any():  # Null values in open price meaning this ticker is not active
+                pass
+            else:
+                self.tickers_data[ticker] = df
+                self.tickers_data[ticker]['ticker'] = ticker
+        except KeyError:
+            pass
 
     def _merge_sort_ticker_data(self):
         """
@@ -73,7 +84,7 @@ class JsonBarPriceHandler(AbstractBarPriceHandler):
             end = df.index.searchsorted(self.end_date)
         # This is added so that the ticker events are always deterministic, otherwise unit test values will differ
         df['colFromIndex'] = df.index
-        df = df.sort_values(by=["colFromIndex", "Ticker"])
+        df = df.sort_values(by=["colFromIndex", "ticker"])
         if start is None and end is None:
             return df.iterrows()
         elif start is not None and end is None:
@@ -98,15 +109,12 @@ class JsonBarPriceHandler(AbstractBarPriceHandler):
 
                 close = row0['close']
 
-                ticker_prices = {
-                    'close': close,
-                    'timestamp': dft.index[0]
-                }
+                ticker_prices = {'close': close, 'timestamp': dft.index[0]}
                 self.tickers[ticker] = ticker_prices
             except OSError:
-                print(
-                    'Could not subscribe ticker {0} as no data JSON found for pricing.'.format(ticker)
-                )
+                print('Could not subscribe ticker {0} as no JSON data found for pricing.'.format(ticker))
+            except KeyError:
+                print('Could not subscribe ticker {0} as no JSON data found for pricing.'.format(ticker))
         else:
             print('Could not subscribe ticker {0} as is already subscribed.'.format(ticker))
 
