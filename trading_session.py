@@ -9,7 +9,6 @@ from risk_manager_example import ExampleRiskManager
 from position_sizer_fixed import FixedPositionSizer
 
 
-
 class TradingSession(object):
     """
     Enscapsulates the settings and components for carrying out either a backtest or live trading session.
